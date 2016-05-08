@@ -3,7 +3,7 @@
 import os
 from pprint import pformat
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
-from njs_sdk_test_1.GenericClient import GenericClient
+from njs_sdk_test_2.GenericClient import GenericClient
 #END_HEADER
 
 
