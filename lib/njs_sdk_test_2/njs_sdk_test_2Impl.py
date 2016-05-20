@@ -5,18 +5,14 @@ from pprint import pformat
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
 from njs_sdk_test_2.GenericClient import GenericClient
 import time
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import ThreadPool, ApplyResult
 import traceback
 #END_HEADER
 
 
 class njs_sdk_test_2:
     '''
-    Module Name:
-    njs_sdk_test_2
-
-    Module Description:
-    A KBase module: njs_sdk_test_2
+    Module for testing NJSwrapper
     '''
 
     ######## WARNING FOR GEVENT USERS #######
@@ -36,33 +32,6 @@ class njs_sdk_test_2:
         print('{}{} {} ID: {}: {}'.format(
             ('\n' if prefix_newline else ''),
             str(time.time()), mod, self.id_, str(message)))
-
-    def run_jobs(self, method, jobs, run_jobs_async):
-        pool = ThreadPool(processes=len(jobs))
-        # this doesn't work, not sure why. Returns list of Nones.
-#             return = pool.map(method, jobs, chunksize=1)
-        if run_jobs_async:
-            self.log('running jobs in threads')
-        res = []
-        for j in jobs:
-            self.log('Method: {} version: {} params:\n{}'.format(
-                j['method'], j['ver'], pformat(j['params'])))
-#                 async.append(run(j))
-            if run_jobs_async:
-                res.append(pool.apply_async(method, (j,)))
-            else:
-                res.append(method(j))
-        if run_jobs_async:
-            pool.close()
-            pool.join()
-            try:
-                res = [r.get() for r in res]
-            except Exception as e:
-                print('caught exception running jobs: ' + str(e))
-                traceback.print_exc()
-                raise
-        self.log('got job results\n' + pformat(res))
-        return res
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -96,30 +65,50 @@ class njs_sdk_test_2:
         results = {'name': mod,
                    'hash': self.GIT_COMMIT_HASH,
                    'id': self.id_}
-        if 'cli_sync' in params:
+        if 'jobs' in params:
+            jobs = params['jobs']
+            self.log('Running jobs {}synchronously'.format(
+                'a' if run_jobs_async else ''))
+            if run_jobs_async:
+                pool = ThreadPool(processes=len(jobs))
 
-            def run_sync(p):
-                ret = gc.sync_call(p['method'], p['params'], p['ver'])
-                self.log('got back from sync\n' + pformat(ret))
+            def run_cli(p):
+                async = p.get('cli_async')
+                a = 'a' if async else ''
+                self.log(('{}synchronous client run of method: {} ' +
+                          'version: {} params:\n{}').format(
+                          a, j['method'], j['ver'], pformat(j['params'])))
+                if async:
+                    ret = gc.asynchronous_call(
+                        p['method'], p['params'], p['ver'])
+                else:
+                    ret = gc.sync_call(p['method'], p['params'], p['ver'])
+                self.log('got back from {}sync:\n{}'.format(
+                    a, pformat(ret)))
                 return ret
 
-            jobs = params['cli_sync']
-            self.log('Running jobs with synchronous client call:')
-            results['cli_sync'] = self.run_jobs(run_sync, jobs, run_jobs_async)
-        if 'cli_async' in params:
-
-            def run_async(p):
-                ret = gc.asynchronous_call(p['method'], p['params'], p['ver'])
-                self.log('got back from async\n' + pformat(ret))
-                return ret
-
-            # jobs must be a list of lists, each sublist is
-            # [module.method, [params], service_ver]
-            jobs = params['cli_async']
-            self.log('Running jobs with asynchronous client call:')
-            results['cli_async'] = self.run_jobs(run_async, jobs,
-                                                 run_jobs_async)
-
+            res = []
+            for j in jobs:
+                async = j.get('cli_async')
+                self.log(('{}synchronous client run of method: {} ' +
+                          'version: {} params:\n{}').format(
+                          async, j['method'], j['ver'], pformat(j['params'])))
+    #                 async.append(run(j))
+                if run_jobs_async:
+                    res.append(pool.apply_async(run_cli, (j,)))
+                else:
+                    res.append(run_cli(j))
+            if run_jobs_async:
+                pool.close()
+                pool.join()
+            try:
+                res = [r.get() if type(r) == ApplyResult else r for r in res]
+            except Exception as e:
+                print('caught exception running jobs: ' + str(e))
+                traceback.print_exc()
+                raise
+            self.log('got job results\n' + pformat(res))
+            results['jobs'] = res
         if 'wait' in params:
             self.log('waiting for ' + str(params['wait']) + ' sec')
             time.sleep(params['wait'])
