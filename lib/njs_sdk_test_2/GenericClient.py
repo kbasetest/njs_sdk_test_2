@@ -190,15 +190,17 @@ class GenericClient(object):
 
     def _asynchronous_call_async(self, service_method, params,
                                  service_version=None, json_rpc_context=None):
+        mod, meth = service_method.split('.')
         if service_version:
             if not json_rpc_context:
                 json_rpc_context = {}
             json_rpc_context['service_ver'] = service_version
-        return self._call(self.url, service_method + '_async',
+        return self._call(self.url, mod + '._' + meth + '_submit',
                           params, json_rpc_context)[0]
 
     def _asynchronous_call_check(self, service_method, job_id):
-        resp = self._call(self.url, service_method + '_check', [job_id])
+        mod, _ = service_method.split('.')
+        resp = self._call(self.url, mod + '._check_job', [job_id])
         return resp[0]
 
     def asynchronous_call(self, service_method, params,

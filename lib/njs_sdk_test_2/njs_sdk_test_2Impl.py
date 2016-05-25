@@ -3,7 +3,7 @@
 import os
 from pprint import pformat
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
-from njs_sdk_test_2.GenericClient import GenericClient
+from njs_sdk_test_2.GenericClient import GenericClient, ServerError
 import time
 from multiprocessing.pool import ThreadPool, ApplyResult
 import traceback
@@ -26,8 +26,8 @@ class njs_sdk_test_2:
     # the latter method is running.
     #########################################
     VERSION = "0.0.1"
-    GIT_URL = "https://github.com/kbasetest/njs_sdk_test_1"
-    GIT_COMMIT_HASH = "f5b4986d4a2e7d6df1ff5794394e5c6c50b568a3"
+    GIT_URL = "https://github.com/kbasetest/njs_sdk_test_2"
+    GIT_COMMIT_HASH = "foo"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -106,6 +106,9 @@ class njs_sdk_test_2:
             except Exception as e:
                 print('caught exception running jobs: ' + str(e))
                 traceback.print_exc()
+                if type(e) == ServerError:
+                    print('server side traceback:')
+                    print(e.data)
                 raise
             self.log('got job results\n' + pformat(res))
             results['jobs'] = res
@@ -114,10 +117,7 @@ class njs_sdk_test_2:
             time.sleep(params['wait'])
             results['wait'] = params['wait']
         if 'save' in params:
-            gc = GenericClient(self.generic_clientURL, use_url_lookup=False,
-                               token=token)
-            prov = gc.sync_call("CallbackServer.get_provenance", [])[0]
-
+            prov = ctx.provenance()
             self.log('Saving workspace object\n' + pformat(results))
             self.log('with provenance\n' + pformat(prov))
 
