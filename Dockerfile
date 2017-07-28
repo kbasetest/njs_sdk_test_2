@@ -16,7 +16,7 @@ RUN apt-get install python-dev libffi-dev libssl-dev \
 
 COPY ./ /kb/module
 RUN mkdir -p /kb/module/work
-RUN chmod 777 /kb/module
+RUN chmod -R a+rw /kb/module
 
 WORKDIR /kb/module
 
