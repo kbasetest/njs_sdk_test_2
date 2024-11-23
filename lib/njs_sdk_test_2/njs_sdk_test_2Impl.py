@@ -3,7 +3,7 @@
 # The header block is where all import statments should live
 import os
 from pprint import pformat
-from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
+from installed_clients.WorkspaceClient import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
 from njs_sdk_test_2.GenericClient import GenericClient, ServerError
 import time
 from multiprocessing.pool import ThreadPool, ApplyResult
@@ -17,7 +17,7 @@ class njs_sdk_test_2:
     njs_sdk_test_2
 
     Module Description:
-    Module for testing NJSwrapper
+    Module for testing ~NJSwrapper~ kb_sdk
     '''
 
     ######## WARNING FOR GEVENT USERS ####### noqa
@@ -26,9 +26,9 @@ class njs_sdk_test_2:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.7"
-    GIT_URL = "https://github.com/rsutormin/njs_sdk_test_2"
-    GIT_COMMIT_HASH = "07366d715b697b6f9eac9eaba3ec0993c361b71a"
+    VERSION = "0.0.9"
+    GIT_URL = "https://github.com/kbasetest/njs_sdk_test_2.git"
+    GIT_COMMIT_HASH = "90149814a1581277800b7c3e172b57796c9c323b"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -83,12 +83,12 @@ class njs_sdk_test_2:
                 pool = ThreadPool(processes=len(jobs))
 
             def run_cli(p):
-                async = p.get('cli_async')
-                a = 'a' if async else ''
+                cli_async = p.get('cli_async')
+                a = 'a' if cli_async else ''
                 self.log(('{}synchronous client run of method: {} ' +
                           'version: {} params:\n{}').format(
                           a, j['method'], j['ver'], pformat(j['params'])))
-                if async:
+                if cli_async:
                     ret = gc.asynchronous_call(
                         p['method'], p['params'], p['ver'])
                 else:
