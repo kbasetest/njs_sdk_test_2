@@ -1,5 +1,5 @@
 /*
-Module for testing NJSwrapper
+Module for testing ~NJSwrapper~ kb_sdk
 */
 
 module njs_sdk_test_2 {

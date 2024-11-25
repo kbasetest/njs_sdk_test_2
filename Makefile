@@ -18,11 +18,7 @@ default: compile build build-startup-script build-executable-script build-test-s
 compile:
 	kb-sdk compile $(SPEC_FILE) \
 		--out $(LIB_DIR) \
-		--plclname $(SERVICE_CAPS)::$(SERVICE_CAPS)Client \
-		--jsclname javascript/Client \
 		--pyclname $(SERVICE_CAPS).$(SERVICE_CAPS)Client \
-		--javasrc src \
-		--java \
 		--pysrvname $(SERVICE_CAPS).$(SERVICE_CAPS)Server \
 		--pyimplname $(SERVICE_CAPS).$(SERVICE_CAPS)Impl;
 
